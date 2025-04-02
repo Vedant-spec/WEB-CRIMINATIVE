@@ -25,8 +25,10 @@ function checkAuth() {
         return;
     }
 
-    // Update UI based on auth status
-    updateAuthUI(isLoggedIn, currentUser);
+    // Only update UI for non-index pages or when logged in
+    if (currentPage !== 'index.html' || isLoggedIn) {
+        updateAuthUI(isLoggedIn, currentUser);
+    }
 }
 
 function updateAuthUI(isLoggedIn, currentUser) {
@@ -36,11 +38,18 @@ function updateAuthUI(isLoggedIn, currentUser) {
     const reportBtn = document.querySelector('a[href="report.html"]');
     const profileBtn = document.querySelector('a[href="profile.html"]');
     const historyBtn = document.querySelector('a[href="history.html"]');
+    const authButtons = document.querySelectorAll('.auth-buttons');
+    const currentPage = window.location.pathname.split('/').pop();
+
+    // Always show auth buttons on index page
+    if (currentPage === 'index.html' || currentPage === '') {
+        authButtons.forEach(btn => btn.style.display = 'flex');
+        return;
+    }
 
     if (isLoggedIn) {
         // Hide login/register buttons
-        if (loginBtn) loginBtn.style.display = 'none';
-        if (registerBtn) registerBtn.style.display = 'none';
+        authButtons.forEach(btn => btn.style.display = 'none');
         
         // Show authenticated user buttons
         if (logoutBtn) logoutBtn.style.display = 'block';
@@ -60,8 +69,7 @@ function updateAuthUI(isLoggedIn, currentUser) {
         }
     } else {
         // Show login/register buttons
-        if (loginBtn) loginBtn.style.display = 'block';
-        if (registerBtn) registerBtn.style.display = 'block';
+        authButtons.forEach(btn => btn.style.display = 'flex');
         
         // Hide authenticated user buttons
         if (logoutBtn) logoutBtn.style.display = 'none';
@@ -72,21 +80,44 @@ function updateAuthUI(isLoggedIn, currentUser) {
 }
 
 function initMobileMenu() {
-    const mobileMenuBtn = document.createElement('button');
-    mobileMenuBtn.className = 'md:hidden fixed top-4 right-4 z-50 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500';
-    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-    
-    const nav = document.querySelector('nav');
-    if (nav) {
-        nav.appendChild(mobileMenuBtn);
-    }
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-    mobileMenuBtn.addEventListener('click', function() {
-        const menuItems = document.querySelector('nav .hidden');
-        if (menuItems) {
-            menuItems.classList.toggle('hidden');
-        }
-    });
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', () => {
+            const isOpen = mobileMenu.classList.contains('hidden');
+            
+            // Toggle menu visibility
+            if (isOpen) {
+                mobileMenu.classList.remove('hidden');
+                mobileMenuButton.innerHTML = '<i class="fas fa-times text-2xl"></i>';
+                // Ensure auth buttons are visible in mobile menu
+                const mobileAuthButtons = mobileMenu.querySelector('.auth-buttons');
+                if (mobileAuthButtons) {
+                    mobileAuthButtons.style.display = 'block';
+                }
+            } else {
+                mobileMenu.classList.add('hidden');
+                mobileMenuButton.innerHTML = '<i class="fas fa-bars text-2xl"></i>';
+            }
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!mobileMenuButton.contains(e.target) && !mobileMenu.contains(e.target)) {
+                mobileMenu.classList.add('hidden');
+                mobileMenuButton.innerHTML = '<i class="fas fa-bars text-2xl"></i>';
+            }
+        });
+
+        // Close mobile menu when window is resized to desktop view
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) { // md breakpoint
+                mobileMenu.classList.add('hidden');
+                mobileMenuButton.innerHTML = '<i class="fas fa-bars text-2xl"></i>';
+            }
+        });
+    }
 }
 
 function initFormValidation() {
